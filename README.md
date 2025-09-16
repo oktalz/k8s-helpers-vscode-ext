@@ -8,6 +8,10 @@ Simple tool to use for simple k8s commands
 
 `kubectl` needs to be installed
 
+### 1.1.0
+
+if multiple configs exist in ~/.kube on selecting context read all of them
+
 ### 1.0.0
 
 nicer menus

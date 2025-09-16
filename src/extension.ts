@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 export function activate(context: vscode.ExtensionContext) {
     const disposables = [
@@ -179,6 +182,9 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('k8s-helpers-ext.getUDPRoutesAll-menu', () => {
             executeKubectlGetCommand('udproutes', true);
+        }),
+        vscode.commands.registerCommand('k8s-helpers-ext.setKubeconfig', () => {
+            setKubeconfig();
         })
     ];
 
@@ -186,6 +192,10 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, context?: string) {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
     let filePath: string;
 
     if (uri) {
@@ -198,7 +208,7 @@ function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, con
     }
 
     const contextFlag = context ? `--context ${context}` : '';
-    const kubectlCommand = `kubectl ${command} -f "${filePath}" ${contextFlag}`;
+    const kubectlCommand = `${kubeconfigEnv} kubectl ${command} -f "${filePath}" ${contextFlag}`;
 
     const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
     const showOutput = command !== 'apply' && command !== 'delete';
@@ -240,21 +250,50 @@ function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, con
 }
 
 function setPermanentContext() {
-    exec('kubectl config get-contexts -o name', (error, stdout, stderr) => {
-        if (error) {
-            vscode.window.showErrorMessage('Failed to get kubectl contexts.');
-            return;
-        }
+    const kubeDir = path.join(os.homedir(), '.kube');
+    if (!fs.existsSync(kubeDir)) {
+        vscode.window.showErrorMessage('No .kube directory found.');
+        return;
+    }
 
-        const contexts = stdout.split('\n').filter(line => line.length > 0);
-        vscode.window.showQuickPick(contexts).then(selectedContext => {
-            if (selectedContext) {
-                exec(`kubectl config use-context ${selectedContext}`, (error, stdout, stderr) => {
+    const files = fs.readdirSync(kubeDir);
+    const configs = files.filter(file => file === 'config' || file.endsWith('.config'));
+
+    const contextPromises = configs.map(config => {
+        return new Promise<string[]>((resolve, reject) => {
+            const configPath = path.join(kubeDir, config);
+            exec(`kubectl config get-contexts -o name --kubeconfig="${configPath}"`, (error, stdout, stderr) => {
+                if (error) {
+                    resolve([]);
+                    return;
+                }
+                const contexts = stdout.split('\n').filter(line => line.length > 0).map(context => `${config}-${context}`);
+                resolve(contexts);
+            });
+        });
+    });
+
+    Promise.all(contextPromises).then(results => {
+        const allContexts = results.flat();
+        vscode.window.showQuickPick(allContexts).then(selected => {
+            if (selected) {
+                const parts = selected.split('-');
+                const config = parts[0];
+                const context = parts.slice(1).join('-');
+                const configPath = path.join(kubeDir, config);
+
+                const helperDir = path.join(os.homedir(), '.k8s-helper');
+                if (!fs.existsSync(helperDir)) {
+                    fs.mkdirSync(helperDir);
+                }
+                fs.writeFileSync(path.join(helperDir, '.env'), configPath);
+
+                exec(`kubectl config use-context "${context}" --kubeconfig="${configPath}"`, (error, stdout, stderr) => {
                     if (error) {
-                        vscode.window.showErrorMessage(`Failed to set context to ${selectedContext}.`);
+                        vscode.window.showErrorMessage(`Failed to set context to ${context}.`);
                         return;
                     }
-                    vscode.window.showInformationMessage(`Switched to context "${selectedContext}".`);
+                    vscode.window.showInformationMessage(`Switched to context "${context}" in ${config}.`);
                 });
             }
         });
@@ -262,7 +301,11 @@ function setPermanentContext() {
 }
 
 function getCurrentContext() {
-    exec('kubectl config current-context', (error, stdout, stderr) => {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
+    exec(`${kubeconfigEnv} kubectl config current-context`, (error, stdout, stderr) => {
         if (error) {
             vscode.window.showErrorMessage('Failed to get current kubectl context.');
             return;
@@ -272,7 +315,11 @@ function getCurrentContext() {
 }
 
 function getCurrentNamespace() {
-    exec('kubectl config view --minify --output "jsonpath={..namespace}"', (error, stdout, stderr) => {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
+    exec(`${kubeconfigEnv} kubectl config view --minify --output "jsonpath={..namespace}"`, (error, stdout, stderr) => {
         if (error) {
             vscode.window.showErrorMessage('Failed to get current namespace.');
             return;
@@ -282,7 +329,11 @@ function getCurrentNamespace() {
 }
 
 function setNamespace() {
-    exec('kubectl get namespace -o name', (error, stdout, stderr) => {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
+    exec(`${kubeconfigEnv} kubectl get namespace -o name`, (error, stdout, stderr) => {
         if (error) {
             vscode.window.showErrorMessage('Failed to get namespaces.');
             return;
@@ -302,7 +353,7 @@ function setNamespace() {
             
         vscode.window.showQuickPick(namespaces, { placeHolder: 'Select a namespace to set' }).then(selectedNamespace => {
             if (selectedNamespace) {
-                exec(`kubectl config set-context --current --namespace=${selectedNamespace}`, (error, stdout, stderr) => {
+                exec(`${kubeconfigEnv} kubectl config set-context --current --namespace=${selectedNamespace}`, (error, stdout, stderr) => {
                     if (error) {
                         vscode.window.showErrorMessage(`Failed to set namespace to ${selectedNamespace}.`);
                         return;
@@ -315,15 +366,19 @@ function setNamespace() {
 }
 
 function createNamespace() {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
     vscode.window.showInputBox({ prompt: 'Enter the name for the new namespace' }).then(namespaceName => {
         if (namespaceName) {
-            exec(`kubectl create namespace ${namespaceName}`, (error, stdout, stderr) => {
+            exec(`${kubeconfigEnv} kubectl create namespace ${namespaceName}`, (error, stdout, stderr) => {
                 if (error) {
                     vscode.window.showErrorMessage(`Failed to create namespace "${namespaceName}": ${stderr || error.message}`);
                     return;
                 }
                 
-                exec(`kubectl config set-context --current --namespace=${namespaceName}`, (setError, setStdout, setStderr) => {
+                exec(`${kubeconfigEnv} kubectl config set-context --current --namespace=${namespaceName}`, (setError, setStdout, setStderr) => {
                     if (setError) {
                         vscode.window.showWarningMessage(`Namespace "${namespaceName}" created, but failed to set it as current: ${setStderr || setError.message}`);
                         return;
@@ -336,8 +391,12 @@ function createNamespace() {
 }
 
 function executeKubectlGetCommand(resource: string, allNamespaces: boolean = false) {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
     const allNamespacesFlag = allNamespaces ? '-A' : '';
-    const kubectlCommand = `kubectl get ${resource} ${allNamespacesFlag}`;
+    const kubectlCommand = `${kubeconfigEnv} kubectl get ${resource} ${allNamespacesFlag}`;
 
     const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
     outputChannel.show();
@@ -358,6 +417,28 @@ function executeKubectlGetCommand(resource: string, allNamespaces: boolean = fal
         }
         outputChannel.appendLine(`${stdout}`);
         vscode.window.showInformationMessage(`Successfully executed kubectl get ${resource}.`);
+    });
+}
+
+function setKubeconfig() {
+    const kubeDir = path.join(os.homedir(), '.kube');
+    if (!fs.existsSync(kubeDir)) {
+        vscode.window.showErrorMessage('No .kube directory found.');
+        return;
+    }
+
+    const files = fs.readdirSync(kubeDir);
+    const configs = files.filter(file => file === 'config' || file.endsWith('.config'));
+
+    vscode.window.showQuickPick(configs).then(selectedConfig => {
+        if (selectedConfig) {
+            const helperDir = path.join(os.homedir(), '.k8s-helper');
+            if (!fs.existsSync(helperDir)) {
+                fs.mkdirSync(helperDir);
+            }
+            fs.writeFileSync(path.join(helperDir, '.env'), path.join(kubeDir, selectedConfig));
+            vscode.window.showInformationMessage(`KUBECONFIG set to ${selectedConfig}`);
+        }
     });
 }
 

@@ -7,7 +7,7 @@
   },
   "publisher": "ZlatkoBratkovic",
   "license": "ISC",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -191,6 +191,10 @@
       {
         "command": "k8s-helpers-ext.getUDPRoutesAll",
         "title": "k8s: gateway: show UDPRoutes (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.setKubeconfig",
+        "title": "k8s: set KUBECONFIG env"
       },
       { "command": "k8s-helpers-ext.getPodsAll-menu", "title": "k8s: show Pods" },
       { "command": "k8s-helpers-ext.getServicesAll-menu", "title": "k8s: show Services" },
@@ -381,6 +385,11 @@
           "when": "resourceLangId == yaml",
           "command": "k8s-helpers-ext.getCurrentContext",
           "group": "k8s_ext_2_context"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setKubeconfig",
+          "group": "k8s_ext_4_config"
         }
       ]
     },

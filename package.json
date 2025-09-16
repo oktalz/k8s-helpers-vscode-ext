@@ -1,0 +1,421 @@
+{
+  "name": "k8s-helpers-ext",
+  "displayName": "k8s-helpers",
+  "description": "kubectl shortcuts",
+  "repository": {
+    "url": "https://github.com/oktalz/k8s-helpers-vscode-ext"
+  },
+  "publisher": "ZlatkoBratkovic",
+  "license": "ISC",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "k8s-helpers-ext.apply",
+        "title": "k8s: Apply"
+      },
+      {
+        "command": "k8s-helpers-ext.delete",
+        "title": "k8s: Delete"
+      },
+      {
+        "command": "k8s-helpers-ext.describe",
+        "title": "k8s: Describe"
+      },
+      {
+        "command": "k8s-helpers-ext.get",
+        "title": "k8s: Get"
+      },
+      {
+        "command": "k8s-helpers-ext.diff",
+        "title": "k8s: Diff"
+      },
+      {
+        "command": "k8s-helpers-ext.setContext",
+        "title": "k8s: Set Context"
+      },
+      {
+        "command": "k8s-helpers-ext.getCurrentContext",
+        "title": "k8s: Current Context"
+      },
+      {
+        "command": "k8s-helpers-ext.getCurrentNamespace",
+        "title": "k8s: Current Namespace"
+      },
+      {
+        "command": "k8s-helpers-ext.setNamespace",
+        "title": "k8s: Set Namespace"
+      },
+      {
+        "command": "k8s-helpers-ext.createNamespace",
+        "title": "k8s: Create Namespace"
+      },
+      {
+        "command": "k8s-helpers-ext.getPods",
+        "title": "k8s: show Pods"
+      },
+      {
+        "command": "k8s-helpers-ext.getPodsAll",
+        "title": "k8s: show Pods (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getServices",
+        "title": "k8s: show Services"
+      },
+      {
+        "command": "k8s-helpers-ext.getIngresses",
+        "title": "k8s: show Ingresses"
+      },
+      {
+        "command": "k8s-helpers-ext.getGatewayClasses",
+        "title": "k8s: gateway: show GatewayClasses"
+      },
+      {
+        "command": "k8s-helpers-ext.getGateways",
+        "title": "k8s: gateway: show Gateways"
+      },
+      {
+        "command": "k8s-helpers-ext.getHTTPRoutes",
+        "title": "k8s: gateway: show HTTPRoutes"
+      },
+      {
+        "command": "k8s-helpers-ext.getServicesAll",
+        "title": "k8s: show Services (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getIngressesAll",
+        "title": "k8s: show Ingresses (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getGatewayClassesAll",
+        "title": "k8s: gateway: show GatewayClasses (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getGatewaysAll",
+        "title": "k8s: gateway: show Gateways (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getHTTPRoutesAll",
+        "title": "k8s: gateway: show HTTPRoutes (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getDeployments",
+        "title": "k8s: show Deployments"
+      },
+      {
+        "command": "k8s-helpers-ext.getDeploymentsAll",
+        "title": "k8s: show Deployments (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getStatefulSets",
+        "title": "k8s: show StatefulSets"
+      },
+      {
+        "command": "k8s-helpers-ext.getStatefulSetsAll",
+        "title": "k8s: show StatefulSets (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getDaemonSets",
+        "title": "k8s: show DaemonSets"
+      },
+      {
+        "command": "k8s-helpers-ext.getDaemonSetsAll",
+        "title": "k8s: show DaemonSets (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getReplicaSets",
+        "title": "k8s: show ReplicaSets"
+      },
+      {
+        "command": "k8s-helpers-ext.getReplicaSetsAll",
+        "title": "k8s: show ReplicaSets (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getJobs",
+        "title": "k8s: show Jobs"
+      },
+      {
+        "command": "k8s-helpers-ext.getJobsAll",
+        "title": "k8s: show Jobs (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getCronJobs",
+        "title": "k8s: show CronJobs"
+      },
+      {
+        "command": "k8s-helpers-ext.getCronJobsAll",
+        "title": "k8s: show CronJobs (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getCRDs",
+        "title": "k8s: show CRDs"
+      },
+      {
+        "command": "k8s-helpers-ext.getGRPCRoutes",
+        "title": "k8s: gateway: show GRPCRoutes"
+      },
+      {
+        "command": "k8s-helpers-ext.getGRPCRoutesAll",
+        "title": "k8s: gateway: show GRPCRoutes (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getTLSRoutes",
+        "title": "k8s: gateway: show TLSRoutes"
+      },
+      {
+        "command": "k8s-helpers-ext.getTLSRoutesAll",
+        "title": "k8s: gateway: show TLSRoutes (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getTCPRoutes",
+        "title": "k8s: gateway: show TCPRoutes"
+      },
+      {
+        "command": "k8s-helpers-ext.getTCPRoutesAll",
+        "title": "k8s: gateway: show TCPRoutes (All Namespaces)"
+      },
+      {
+        "command": "k8s-helpers-ext.getUDPRoutes",
+        "title": "k8s: gateway: show UDPRoutes"
+      },
+      {
+        "command": "k8s-helpers-ext.getUDPRoutesAll",
+        "title": "k8s: gateway: show UDPRoutes (All Namespaces)"
+      },
+      { "command": "k8s-helpers-ext.getPodsAll-menu", "title": "k8s: show Pods" },
+      { "command": "k8s-helpers-ext.getServicesAll-menu", "title": "k8s: show Services" },
+      { "command": "k8s-helpers-ext.getIngressesAll-menu", "title": "k8s: show Ingresses" },
+      { "command": "k8s-helpers-ext.getGatewayClassesAll-menu", "title": "k8s: gateway: show GatewayClasses" },
+      { "command": "k8s-helpers-ext.getGatewaysAll-menu", "title": "k8s: gateway: show Gateways" },
+      { "command": "k8s-helpers-ext.getHTTPRoutesAll-menu", "title": "k8s: gateway: show HTTPRoutes" },
+      { "command": "k8s-helpers-ext.getDeploymentsAll-menu", "title": "k8s: show Deployments" },
+      { "command": "k8s-helpers-ext.getStatefulSetsAll-menu", "title": "k8s: show StatefulSets" },
+      { "command": "k8s-helpers-ext.getDaemonSetsAll-menu", "title": "k8s: show DaemonSets" },
+      { "command": "k8s-helpers-ext.getReplicaSetsAll-menu", "title": "k8s: show ReplicaSets" },
+      { "command": "k8s-helpers-ext.getJobsAll-menu", "title": "k8s: show Jobs" },
+      { "command": "k8s-helpers-ext.getCronJobsAll-menu", "title": "k8s: show CronJobs" },
+      { "command": "k8s-helpers-ext.getGRPCRoutesAll-menu", "title": "k8s: gateway: show GRPCRoutes" },
+      { "command": "k8s-helpers-ext.getTLSRoutesAll-menu", "title": "k8s: gateway: show TLSRoutes" },
+      { "command": "k8s-helpers-ext.getTCPRoutesAll-menu", "title": "k8s: gateway: show TCPRoutes" },
+      { "command": "k8s-helpers-ext.getUDPRoutesAll-menu", "title": "k8s: gateway: show UDPRoutes" }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "k8s-helpers-ext.getPodsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getServicesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getIngressesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getGatewayClassesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getGatewaysAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getHTTPRoutesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getDeploymentsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getStatefulSetsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getDaemonSetsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getReplicaSetsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getJobsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getCronJobsAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getGRPCRoutesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getTLSRoutesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getTCPRoutesAll-menu", "when": "false" },
+        { "command": "k8s-helpers-ext.getUDPRoutesAll-menu", "when": "false" }
+      ],
+      "editor/context": [
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.apply",
+          "group": "k8s_ext_1_general"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.delete",
+          "group": "k8s_ext_1_general"
+        },
+        {
+          "submenu": "k8s-helpers-ext.submenu",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        },
+        {
+          "submenu": "k8s-helpers-ext.infoSubmenu",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        },
+        {
+          "submenu": "k8s-helpers-ext.infoSubmenuAll",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setContext",
+          "group": "k8s_ext_2_context"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.getCurrentContext",
+          "group": "k8s_ext_2_context"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.getCurrentNamespace",
+          "group": "k8s_ext_3_namespace"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setNamespace",
+          "group": "k8s_ext_3_namespace"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.createNamespace",
+          "group": "k8s_ext_3_namespace"
+        }
+      ],
+      "explorer/context": [
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.apply",
+          "group": "k8s_ext_1_general"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.delete",
+          "group": "k8s_ext_1_general"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setNamespace",
+          "group": "k8s_ext_1_general"
+        },
+        {
+          "submenu": "k8s-helpers-ext.submenu",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        },
+        {
+          "submenu": "k8s-helpers-ext.infoSubmenu",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        },
+        {
+          "submenu": "k8s-helpers-ext.infoSubmenuAll",
+          "group": "k8s_ext_1_general",
+          "when": "resourceLangId == yaml"
+        }
+      ],
+      "k8s-helpers-ext.infoSubmenu": [
+        { "command": "k8s-helpers-ext.getPods", "group": "1_core@1" },
+        { "command": "k8s-helpers-ext.getServices", "group": "1_core@2" },
+        { "command": "k8s-helpers-ext.getIngresses", "group": "1_core@3" },
+        { "command": "k8s-helpers-ext.getDeployments", "group": "2_workload@1" },
+        { "command": "k8s-helpers-ext.getStatefulSets", "group": "2_workload@2" },
+        { "command": "k8s-helpers-ext.getDaemonSets", "group": "2_workload@3" },
+        { "command": "k8s-helpers-ext.getReplicaSets", "group": "2_workload@4" },
+        { "command": "k8s-helpers-ext.getJobs", "group": "3_batch@1" },
+        { "command": "k8s-helpers-ext.getCronJobs", "group": "3_batch@2" },
+        { "command": "k8s-helpers-ext.getCRDs", "group": "4_custom@1" },
+        { "command": "k8s-helpers-ext.getGatewayClasses", "group": "5_gateway@1" },
+        { "command": "k8s-helpers-ext.getGateways", "group": "5_gateway@2" },
+        { "command": "k8s-helpers-ext.getHTTPRoutes", "group": "5_gateway@3" },
+        { "command": "k8s-helpers-ext.getGRPCRoutes", "group": "5_gateway@4" },
+        { "command": "k8s-helpers-ext.getTLSRoutes", "group": "5_gateway@5" },
+        { "command": "k8s-helpers-ext.getTCPRoutes", "group": "5_gateway@6" },
+        { "command": "k8s-helpers-ext.getUDPRoutes", "group": "5_gateway@7" }
+      ],
+      "k8s-helpers-ext.infoSubmenuAll": [
+        { "command": "k8s-helpers-ext.getPodsAll-menu", "group": "1_core@1" },
+        { "command": "k8s-helpers-ext.getServicesAll-menu", "group": "1_core@2" },
+        { "command": "k8s-helpers-ext.getIngressesAll-menu", "group": "1_core@3" },
+        { "command": "k8s-helpers-ext.getDeploymentsAll-menu", "group": "2_workload@1" },
+        { "command": "k8s-helpers-ext.getStatefulSetsAll-menu", "group": "2_workload@2" },
+        { "command": "k8s-helpers-ext.getDaemonSetsAll-menu", "group": "2_workload@3" },
+        { "command": "k8s-helpers-ext.getReplicaSetsAll-menu", "group": "2_workload@4" },
+        { "command": "k8s-helpers-ext.getJobsAll-menu", "group": "3_batch@1" },
+        { "command": "k8s-helpers-ext.getCronJobsAll-menu", "group": "3_batch@2" },
+        { "command": "k8s-helpers-ext.getGatewayClassesAll-menu", "group": "5_gateway@1" },
+        { "command": "k8s-helpers-ext.getGatewaysAll-menu", "group": "5_gateway@2" },
+        { "command": "k8s-helpers-ext.getHTTPRoutesAll-menu", "group": "5_gateway@3" },
+        { "command": "k8s-helpers-ext.getGRPCRoutesAll-menu", "group": "5_gateway@4" },
+        { "command": "k8s-helpers-ext.getTLSRoutesAll-menu", "group": "5_gateway@5" },
+        { "command": "k8s-helpers-ext.getTCPRoutesAll-menu", "group": "5_gateway@6" },
+        { "command": "k8s-helpers-ext.getUDPRoutesAll-menu", "group": "5_gateway@7" }
+      ],
+      "k8s-helpers-ext.submenu": [
+        {
+          "command": "k8s-helpers-ext.describe",
+          "group": "navigation"
+        },
+        {
+          "command": "k8s-helpers-ext.get",
+          "group": "navigation"
+        },
+        {
+          "command": "k8s-helpers-ext.diff",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.getCurrentNamespace",
+          "group": "k8s_ext_3_namespace"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.createNamespace",
+          "group": "k8s_ext_3_namespace"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setContext",
+          "group": "k8s_ext_2_context"
+        },
+        {
+          "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.getCurrentContext",
+          "group": "k8s_ext_2_context"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "k8s-helpers-ext.submenu",
+        "label": "k8s: Other"
+      },
+      {
+        "id": "k8s-helpers-ext.infoSubmenu",
+        "label": "k8s: Info"
+      },
+      {
+        "id": "k8s-helpers-ext.infoSubmenuAll",
+        "label": "k8s: Info (All Namespaces)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "eslint": "^9.34.0",
+    "typescript": "^4.9.5",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

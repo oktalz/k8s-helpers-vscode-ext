@@ -185,6 +185,12 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand('k8s-helpers-ext.setKubeconfig', () => {
             setKubeconfig();
+        }),
+        vscode.commands.registerCommand('k8s-helpers-ext.getResource', () => {
+            getResource();
+        }),
+        vscode.commands.registerCommand('k8s-helpers-ext.clearKubeconfig', () => {
+            clearKubeconfig();
         })
     ];
 
@@ -208,7 +214,11 @@ function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, con
     }
 
     const contextFlag = context ? `--context ${context}` : '';
-    const kubectlCommand = `${kubeconfigEnv} kubectl ${command} -f "${filePath}" ${contextFlag}`;
+    let outputYaml = '';
+    if (command === "get"){
+        outputYaml = "-o yaml";
+    }
+    const kubectlCommand = `${kubeconfigEnv} kubectl ${command} -f "${filePath}" ${contextFlag} ${outputYaml}`;
 
     const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
     const showOutput = command !== 'apply' && command !== 'delete';
@@ -432,6 +442,11 @@ function setKubeconfig() {
 
     vscode.window.showQuickPick(configs).then(selectedConfig => {
         if (selectedConfig) {
+            if (selectedConfig === 'config') {
+                clearKubeconfig();
+                return;
+            }
+            
             const helperDir = path.join(os.homedir(), '.k8s-helper');
             if (!fs.existsSync(helperDir)) {
                 fs.mkdirSync(helperDir);
@@ -440,6 +455,82 @@ function setKubeconfig() {
             vscode.window.showInformationMessage(`KUBECONFIG set to ${selectedConfig}`);
         }
     });
+}
+
+function getResource() {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+    const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
+
+    exec(`${kubeconfigEnv} kubectl get namespace -o name`, (error, stdout, stderr) => {
+        if (error) {
+            vscode.window.showErrorMessage('Failed to get namespaces.');
+            return;
+        }
+
+        const namespaces = stdout.split('\n')
+            .filter(line => line.length > 0)
+            .map(line => line.replace('namespace/', ''));
+
+        vscode.window.showQuickPick(namespaces, { placeHolder: 'Select a namespace' }).then(selectedNamespace => {
+            if (selectedNamespace) {
+                exec(`${kubeconfigEnv} kubectl api-resources --verbs=list --namespaced=true -o name`, (error, stdout, stderr) => {
+                    if (error) {
+                        vscode.window.showErrorMessage('Failed to get resource types.');
+                        return;
+                    }
+
+                    const resourceTypes = stdout.split('\n').filter(line => line.length > 0);
+                    vscode.window.showQuickPick(resourceTypes, { placeHolder: 'Select a resource type' }).then(selectedResourceType => {
+                        if (selectedResourceType) {
+                            exec(`${kubeconfigEnv} kubectl get ${selectedResourceType} -n ${selectedNamespace} -o name`, (error, stdout, stderr) => {
+                                if (error) {
+                                    vscode.window.showErrorMessage(`Failed to get resources of type ${selectedResourceType}.`);
+                                    return;
+                                }
+
+                                const resources = stdout.split('\n').filter(line => line.length > 0);
+                                vscode.window.showQuickPick(resources, { placeHolder: 'Select a resource' }).then(selectedResource => {
+                                    if (selectedResource) {
+                                        const kubectlCommand = `${kubeconfigEnv} kubectl get ${selectedResource} -n ${selectedNamespace} -o yaml`;
+                                        const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
+                                        outputChannel.show();
+                                        outputChannel.appendLine(`# ${kubectlCommand}`);
+
+                                        exec(kubectlCommand, (error, stdout, stderr) => {
+                                            if (error) {
+                                                outputChannel.appendLine(`Error: ${error.message}`);
+                                                if (stderr) {
+                                                    outputChannel.appendLine(`err: ${stderr}`);
+                                                }
+                                                vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
+                                                return;
+                                            }
+
+                                            if (stderr) {
+                                                outputChannel.appendLine(`err: ${stderr}`);
+                                            }
+                                            outputChannel.appendLine(`${stdout}`);
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    });
+                });
+            }
+        });
+    });
+}
+
+function clearKubeconfig() {
+    const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
+    if (fs.existsSync(envPath)) {
+        fs.unlinkSync(envPath);
+        vscode.window.showInformationMessage('KUBECONFIG environment file cleared.');
+    } else {
+        vscode.window.showInformationMessage('No KUBECONFIG environment file to clear.');
+    }
 }
 
 export function deactivate() {}

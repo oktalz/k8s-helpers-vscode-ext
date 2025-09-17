@@ -7,7 +7,7 @@
   },
   "publisher": "ZlatkoBratkovic",
   "license": "ISC",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -196,6 +196,14 @@
         "command": "k8s-helpers-ext.setKubeconfig",
         "title": "k8s: set KUBECONFIG env"
       },
+      {
+        "command": "k8s-helpers-ext.getResource",
+        "title": "k8s: Get Resource"
+      },
+      {
+        "command": "k8s-helpers-ext.clearKubeconfig",
+        "title": "k8s: clear KUBECONFIG env"
+      },
       { "command": "k8s-helpers-ext.getPodsAll-menu", "title": "k8s: show Pods" },
       { "command": "k8s-helpers-ext.getServicesAll-menu", "title": "k8s: show Services" },
       { "command": "k8s-helpers-ext.getIngressesAll-menu", "title": "k8s: show Ingresses" },
@@ -275,13 +283,13 @@
         },
         {
           "when": "resourceLangId == yaml",
-          "command": "k8s-helpers-ext.setNamespace",
+          "command": "k8s-helpers-ext.createNamespace",
           "group": "k8s_ext_3_namespace"
         },
         {
-          "when": "resourceLangId == yaml",
-          "command": "k8s-helpers-ext.createNamespace",
-          "group": "k8s_ext_3_namespace"
+            "when": "resourceLangId == yaml",
+            "command": "k8s-helpers-ext.getResource",
+            "group": "k8s_ext_1_general"
         }
       ],
       "explorer/context": [
@@ -293,11 +301,6 @@
         {
           "when": "resourceLangId == yaml",
           "command": "k8s-helpers-ext.delete",
-          "group": "k8s_ext_1_general"
-        },
-        {
-          "when": "resourceLangId == yaml",
-          "command": "k8s-helpers-ext.setNamespace",
           "group": "k8s_ext_1_general"
         },
         {
@@ -314,6 +317,11 @@
           "submenu": "k8s-helpers-ext.infoSubmenuAll",
           "group": "k8s_ext_1_general",
           "when": "resourceLangId == yaml"
+        },
+        {
+            "when": "resourceLangId == yaml",
+            "command": "k8s-helpers-ext.getResource",
+            "group": "k8s_ext_1_general"
         }
       ],
       "k8s-helpers-ext.infoSubmenu": [
@@ -373,6 +381,11 @@
         },
         {
           "when": "resourceLangId == yaml",
+          "command": "k8s-helpers-ext.setNamespace",
+          "group": "k8s_ext_3_namespace"
+        },
+        {
+          "when": "resourceLangId == yaml",
           "command": "k8s-helpers-ext.createNamespace",
           "group": "k8s_ext_3_namespace"
         },
@@ -390,6 +403,11 @@
           "when": "resourceLangId == yaml",
           "command": "k8s-helpers-ext.setKubeconfig",
           "group": "k8s_ext_4_config"
+        },
+        {
+            "when": "resourceLangId == yaml",
+            "command": "k8s-helpers-ext.clearKubeconfig",
+            "group": "k8s_ext_4_config"
         }
       ]
     },

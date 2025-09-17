@@ -8,6 +8,10 @@ Simple tool to use for simple k8s commands
 
 `kubectl` needs to be installed
 
+### 1.2.1
+
+k8s: Get Resource - filter out resource types that do not have objects
+
 ### 1.2.0
 
 add k8s: Get Resource

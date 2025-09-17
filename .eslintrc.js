@@ -1,0 +1,24 @@
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  plugins: [
+    '@typescript-eslint',
+  ],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+  ],
+  rules: {
+    "@typescript-eslint/naming-convention": [
+      "warn",
+      {
+        selector: "import",
+        format: ["camelCase", "PascalCase"],
+      },
+    ],
+    curly: "warn",
+    eqeqeq: "warn",
+    "no-throw-literal": "warn",
+    semi: "warn",
+  },
+};

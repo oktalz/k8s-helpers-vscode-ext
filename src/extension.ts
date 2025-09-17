@@ -468,9 +468,17 @@ function getResource() {
             return;
         }
 
+        const excludedNamespaces = [
+            'kube-node-lease',
+            'kube-public',
+            'kube-system',
+            'local-path-storage'
+        ];
+
         const namespaces = stdout.split('\n')
             .filter(line => line.length > 0)
-            .map(line => line.replace('namespace/', ''));
+            .map(line => line.replace('namespace/', ''))
+            .filter(ns => !excludedNamespaces.includes(ns));
 
         vscode.window.showQuickPick(namespaces, { placeHolder: 'Select a namespace' }).then(selectedNamespace => {
             if (selectedNamespace) {
@@ -481,41 +489,63 @@ function getResource() {
                     }
 
                     const resourceTypes = stdout.split('\n').filter(line => line.length > 0);
-                    vscode.window.showQuickPick(resourceTypes, { placeHolder: 'Select a resource type' }).then(selectedResourceType => {
-                        if (selectedResourceType) {
-                            exec(`${kubeconfigEnv} kubectl get ${selectedResourceType} -n ${selectedNamespace} -o name`, (error, stdout, stderr) => {
-                                if (error) {
-                                    vscode.window.showErrorMessage(`Failed to get resources of type ${selectedResourceType}.`);
-                                    return;
+
+                    const promises = resourceTypes.map(resourceType => {
+                        return new Promise<string | null>((resolve) => {
+                            exec(`${kubeconfigEnv} kubectl get ${resourceType} -n ${selectedNamespace} -o name`, (error, stdout, stderr) => {
+                                if (error || stdout.trim().length === 0) {
+                                    resolve(null);
+                                } else {
+                                    resolve(resourceType);
                                 }
+                            });
+                        });
+                    });
 
-                                const resources = stdout.split('\n').filter(line => line.length > 0);
-                                vscode.window.showQuickPick(resources, { placeHolder: 'Select a resource' }).then(selectedResource => {
-                                    if (selectedResource) {
-                                        const kubectlCommand = `${kubeconfigEnv} kubectl get ${selectedResource} -n ${selectedNamespace} -o yaml`;
-                                        const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
-                                        outputChannel.show();
-                                        outputChannel.appendLine(`# ${kubectlCommand}`);
+                    Promise.all(promises).then(results => {
+                        const availableResourceTypes = results.filter((r): r is string => r !== null);
 
-                                        exec(kubectlCommand, (error, stdout, stderr) => {
-                                            if (error) {
-                                                outputChannel.appendLine(`Error: ${error.message}`);
+                        if (availableResourceTypes.length === 0) {
+                            vscode.window.showInformationMessage(`No resources found in namespace ${selectedNamespace}.`);
+                            return;
+                        }
+
+                        vscode.window.showQuickPick(availableResourceTypes, { placeHolder: 'Select a resource type' }).then(selectedResourceType => {
+                            if (selectedResourceType) {
+                                exec(`${kubeconfigEnv} kubectl get ${selectedResourceType} -n ${selectedNamespace} -o name`, (error, stdout, stderr) => {
+                                    if (error) {
+                                        vscode.window.showErrorMessage(`Failed to get resources of type ${selectedResourceType}.`);
+                                        return;
+                                    }
+
+                                    const resources = stdout.split('\n').filter(line => line.length > 0);
+                                    vscode.window.showQuickPick(resources, { placeHolder: 'Select a resource' }).then(selectedResource => {
+                                        if (selectedResource) {
+                                            const kubectlCommand = `${kubeconfigEnv} kubectl get ${selectedResource} -n ${selectedNamespace} -o yaml`;
+                                            const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
+                                            outputChannel.show();
+                                            outputChannel.appendLine(`# ${kubectlCommand}`);
+
+                                            exec(kubectlCommand, (error, stdout, stderr) => {
+                                                if (error) {
+                                                    outputChannel.appendLine(`Error: ${error.message}`);
+                                                    if (stderr) {
+                                                        outputChannel.appendLine(`err: ${stderr}`);
+                                                    }
+                                                    vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
+                                                    return;
+                                                }
+
                                                 if (stderr) {
                                                     outputChannel.appendLine(`err: ${stderr}`);
                                                 }
-                                                vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
-                                                return;
-                                            }
-
-                                            if (stderr) {
-                                                outputChannel.appendLine(`err: ${stderr}`);
-                                            }
-                                            outputChannel.appendLine(`${stdout}`);
-                                        });
-                                    }
+                                                outputChannel.appendLine(`${stdout}`);
+                                            });
+                                        }
+                                    });
                                 });
-                            });
-                        }
+                            }
+                        });
                     });
                 });
             }

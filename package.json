@@ -7,7 +7,7 @@
   },
   "publisher": "ZlatkoBratkovic",
   "license": "ISC",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -19,6 +19,20 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "K8s Helpers",
+      "properties": {
+        "k8s-helpers-ext.outputType": {
+          "type": "string",
+          "default": "tab",
+          "description": "Determines where the output of kubectl commands is displayed.",
+          "enum": [
+            "tab",
+            "outputChannel"
+          ]
+        }
+      }
+    },
     "commands": [
       {
         "command": "k8s-helpers-ext.apply",

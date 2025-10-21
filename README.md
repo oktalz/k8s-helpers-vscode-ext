@@ -1,4 +1,4 @@
-# k8s-helpers-ext 
+# k8s-helpers-ext
 
 ## Features
 
@@ -7,6 +7,11 @@ Simple tool to use for simple k8s commands
 ## Requirements
 
 `kubectl` needs to be installed
+
+### 1.2.2
+
+add K8s-helpers-ext option in setting to pick output type (new tab or output)
+repo cleanup
 
 ### 1.2.1
 

@@ -198,6 +198,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, context?: string) {
+    const config = vscode.workspace.getConfiguration('k8s-helpers-ext');
+    const outputType = config.get('outputType');
+
     const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
     const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
@@ -215,45 +218,69 @@ function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, con
 
     const contextFlag = context ? `--context ${context}` : '';
     let outputYaml = '';
-    if (command === "get"){
+    if (command === "get") {
         outputYaml = "-o yaml";
     }
     const kubectlCommand = `${kubeconfigEnv} kubectl ${command} -f "${filePath}" ${contextFlag} ${outputYaml}`;
 
-    const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
     const showOutput = command !== 'apply' && command !== 'delete';
 
-    if (showOutput) {
-        outputChannel.show();
-        outputChannel.appendLine(`# ${kubectlCommand}`);
-    }
-
-    exec(kubectlCommand, (error: (Error & { code?: number }) | null, stdout: string, stderr: string) => {
-        if (command === 'diff' && error && error.code === 1) {
-            outputChannel.show();
-            outputChannel.appendLine(`Differences found:\n${stdout}`);
-            if (stderr) {
-                outputChannel.appendLine(`err:\n${stderr}`);
+    exec(kubectlCommand, async (error: (Error & { code?: number }) | null, stdout: string, stderr: string) => {
+        if (outputType === 'tab') {
+            if (command === 'diff' && error && error.code === 1) {
+                const output = `Differences found:\n${stdout}\nerr:\n${stderr}`;
+                const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                await vscode.window.showTextDocument(document);
+                vscode.window.showInformationMessage('kubectl diff found differences.');
+                return;
             }
-            vscode.window.showInformationMessage('kubectl diff found differences.');
-            return;
-        }
 
-        if (error) {
-            outputChannel.show();
-            outputChannel.appendLine(`Error: ${error.message}`);
-            if (stderr) {
-                outputChannel.appendLine(`err: ${stderr}`);
+            if (error) {
+                const output = `Error: ${error.message}\nerr: ${stderr}`;
+                const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                await vscode.window.showTextDocument(document);
+                vscode.window.showErrorMessage(`Failed to execute kubectl ${command}. See output for details.`);
+                return;
             }
-            vscode.window.showErrorMessage(`Failed to execute kubectl ${command}. See output for details.`);
-            return;
-        }
 
-        if (showOutput) {
-            if (stderr) {
-                outputChannel.appendLine(`err: ${stderr}`);
+            if (showOutput) {
+                const output = `# ${kubectlCommand}\n\n${stderr}\n\n${stdout}`;
+                const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                await vscode.window.showTextDocument(document);
             }
-            outputChannel.appendLine(`${stdout}`);
+        } else {
+            const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
+            if (showOutput) {
+                outputChannel.show();
+                outputChannel.appendLine(`# ${kubectlCommand}`);
+            }
+
+            if (command === 'diff' && error && error.code === 1) {
+                outputChannel.show();
+                outputChannel.appendLine(`Differences found:\n${stdout}`);
+                if (stderr) {
+                    outputChannel.appendLine(`err:\n${stderr}`);
+                }
+                vscode.window.showInformationMessage('kubectl diff found differences.');
+                return;
+            }
+
+            if (error) {
+                outputChannel.show();
+                outputChannel.appendLine(`Error: ${error.message}`);
+                if (stderr) {
+                    outputChannel.appendLine(`err: ${stderr}`);
+                }
+                vscode.window.showErrorMessage(`Failed to execute kubectl ${command}. See output for details.`);
+                return;
+            }
+
+            if (showOutput) {
+                if (stderr) {
+                    outputChannel.appendLine(`err: ${stderr}`);
+                }
+                outputChannel.appendLine(`${stdout}`);
+            }
         }
         vscode.window.showInformationMessage(`Successfully executed kubectl ${command}.`);
     });
@@ -401,6 +428,9 @@ function createNamespace() {
 }
 
 function executeKubectlGetCommand(resource: string, allNamespaces: boolean = false) {
+    const config = vscode.workspace.getConfiguration('k8s-helpers-ext');
+    const outputType = config.get('outputType');
+
     const envPath = path.join(os.homedir(), '.k8s-helper', '.env');
     const kubeconfig = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
     const kubeconfigEnv = kubeconfig ? `KUBECONFIG=${kubeconfig}` : '';
@@ -408,24 +438,38 @@ function executeKubectlGetCommand(resource: string, allNamespaces: boolean = fal
     const allNamespacesFlag = allNamespaces ? '-A' : '';
     const kubectlCommand = `${kubeconfigEnv} kubectl get ${resource} ${allNamespacesFlag}`;
 
-    const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
-    outputChannel.show();
-    outputChannel.appendLine(`# ${kubectlCommand}`);
+    exec(kubectlCommand, async (error: (Error & { code?: number }) | null, stdout: string, stderr: string) => {
+        if (outputType === 'tab') {
+            if (error) {
+                const output = `Error: ${error.message}\nerr: ${stderr}`;
+                const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                await vscode.window.showTextDocument(document);
+                vscode.window.showErrorMessage(`Failed to execute kubectl get ${resource}. See output for details.`);
+                return;
+            }
 
-    exec(kubectlCommand, (error: (Error & { code?: number }) | null, stdout: string, stderr: string) => {
-        if (error) {
-            outputChannel.appendLine(`Error: ${error.message}`);
+            const output = `# ${kubectlCommand}\n\n${stderr}\n\n${stdout}`;
+            const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+            await vscode.window.showTextDocument(document);
+        } else {
+            const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
+            outputChannel.show();
+            outputChannel.appendLine(`# ${kubectlCommand}`);
+
+            if (error) {
+                outputChannel.appendLine(`Error: ${error.message}`);
+                if (stderr) {
+                    outputChannel.appendLine(`err: ${stderr}`);
+                }
+                vscode.window.showErrorMessage(`Failed to execute kubectl get ${resource}. See output for details.`);
+                return;
+            }
+
             if (stderr) {
                 outputChannel.appendLine(`err: ${stderr}`);
             }
-            vscode.window.showErrorMessage(`Failed to execute kubectl get ${resource}. See output for details.`);
-            return;
+            outputChannel.appendLine(`${stdout}`);
         }
-
-        if (stderr) {
-            outputChannel.appendLine(`err: ${stderr}`);
-        }
-        outputChannel.appendLine(`${stdout}`);
         vscode.window.showInformationMessage(`Successfully executed kubectl get ${resource}.`);
     });
 }
@@ -521,25 +565,41 @@ function getResource() {
                                     const resources = stdout.split('\n').filter(line => line.length > 0);
                                     vscode.window.showQuickPick(resources, { placeHolder: 'Select a resource' }).then(selectedResource => {
                                         if (selectedResource) {
-                                            const kubectlCommand = `${kubeconfigEnv} kubectl get ${selectedResource} -n ${selectedNamespace} -o yaml`;
-                                            const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
-                                            outputChannel.show();
-                                            outputChannel.appendLine(`# ${kubectlCommand}`);
+                                            const config = vscode.workspace.getConfiguration('k8s-helpers-ext');
+                                            const outputType = config.get('outputType');
 
-                                            exec(kubectlCommand, (error, stdout, stderr) => {
-                                                if (error) {
-                                                    outputChannel.appendLine(`Error: ${error.message}`);
+                                            const kubectlCommand = `${kubeconfigEnv} kubectl get ${selectedResource} -n ${selectedNamespace} -o yaml`;
+                                            exec(kubectlCommand, async (error, stdout, stderr) => {
+                                                if (outputType === 'tab') {
+                                                    if (error) {
+                                                        const output = `Error: ${error.message}\nerr: ${stderr}`;
+                                                        const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                                                        await vscode.window.showTextDocument(document);
+                                                        vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
+                                                        return;
+                                                    }
+                                                    const output = `# ${kubectlCommand}\n\n${stderr}\n\n${stdout}`;
+                                                    const document = await vscode.workspace.openTextDocument({ content: output, language: 'yaml' });
+                                                    await vscode.window.showTextDocument(document);
+                                                } else {
+                                                    const outputChannel = vscode.window.createOutputChannel('k8s-helpers-ext');
+                                                    outputChannel.show();
+                                                    outputChannel.appendLine(`# ${kubectlCommand}`);
+
+                                                    if (error) {
+                                                        outputChannel.appendLine(`Error: ${error.message}`);
+                                                        if (stderr) {
+                                                            outputChannel.appendLine(`err: ${stderr}`);
+                                                        }
+                                                        vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
+                                                        return;
+                                                    }
+
                                                     if (stderr) {
                                                         outputChannel.appendLine(`err: ${stderr}`);
                                                     }
-                                                    vscode.window.showErrorMessage(`Failed to get resource ${selectedResource}. See output for details.`);
-                                                    return;
+                                                    outputChannel.appendLine(`${stdout}`);
                                                 }
-
-                                                if (stderr) {
-                                                    outputChannel.appendLine(`err: ${stderr}`);
-                                                }
-                                                outputChannel.appendLine(`${stdout}`);
                                             });
                                         }
                                     });

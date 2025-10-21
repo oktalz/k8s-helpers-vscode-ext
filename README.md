@@ -8,9 +8,12 @@ Simple tool to use for simple k8s commands
 
 `kubectl` needs to be installed
 
-### 1.2.2
+### 1.2.3
 
 add K8s-helpers-ext option in setting to pick output type (new tab or output)
+
+### 1.2.2
+
 repo cleanup
 
 ### 1.2.1

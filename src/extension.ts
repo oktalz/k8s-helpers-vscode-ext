@@ -4,39 +4,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-let reusableDocument: vscode.TextDocument | undefined;
-
 async function displayOutput(content: string, outputType: string | undefined) {
     if (outputType === 'newTab') {
         const document = await vscode.workspace.openTextDocument({ content: content, language: 'yaml' });
         await vscode.window.showTextDocument(document);
     } else if (outputType === 'tab') {
-        if (!reusableDocument || reusableDocument.isClosed) {
-            reusableDocument = await vscode.workspace.openTextDocument(vscode.Uri.parse('untitled:k8s-helpers'));
-            vscode.languages.setTextDocumentLanguage(reusableDocument, 'yaml');
-        }
-
-        try {
-            const editor = await vscode.window.showTextDocument(reusableDocument, { preview: false });
-            const fullRange = new vscode.Range(
-                reusableDocument.positionAt(0),
-                reusableDocument.positionAt(reusableDocument.getText().length)
-            );
-            await editor.edit(editBuilder => {
-                editBuilder.replace(fullRange, content);
-            });
-        } catch (e) {
-            reusableDocument = await vscode.workspace.openTextDocument(vscode.Uri.parse('untitled:k8s-helpers'));
-            vscode.languages.setTextDocumentLanguage(reusableDocument, 'yaml');
-            const editor = await vscode.window.showTextDocument(reusableDocument, { preview: false });
-            const fullRange = new vscode.Range(
-                reusableDocument.positionAt(0),
-                reusableDocument.positionAt(reusableDocument.getText().length)
-            );
-            await editor.edit(editBuilder => {
-                editBuilder.replace(fullRange, content);
-            });
-        }
+        const tmpPath = path.join(os.tmpdir(), 'k8s-helpers');
+        fs.writeFileSync(tmpPath, content);
+        const document = await vscode.workspace.openTextDocument(tmpPath);
+        await vscode.window.showTextDocument(document, { preview: false });
     }
 }
 

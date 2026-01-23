@@ -4,6 +4,10 @@ All notable changes to the "k8s-helpers-ext" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.2.5
+
+tab always opens data in same tab - use file
+
 ## 1.2.4
 
 tab always opens data in same tab, there is new option newTab to open always in different one

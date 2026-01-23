@@ -28,6 +28,7 @@
           "description": "Determines where the output of kubectl commands is displayed.",
           "enum": [
             "tab",
+            "newTab",
             "outputChannel"
           ]
         }

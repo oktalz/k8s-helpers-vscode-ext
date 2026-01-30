@@ -2,7 +2,9 @@
 
 All notable changes to the "k8s-helpers-ext" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## 1.2.6
+
+fixes for tab creation and k8s context saving
 
 ## 1.2.5
 

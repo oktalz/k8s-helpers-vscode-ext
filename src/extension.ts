@@ -4,20 +4,38 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+class K8sContentProvider implements vscode.TextDocumentContentProvider {
+    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    readonly onDidChange = this._onDidChange.event;
+    private _content: string = '';
+
+    update(uri: vscode.Uri, content: string) {
+        this._content = content;
+        this._onDidChange.fire(uri);
+    }
+
+    provideTextDocumentContent(uri: vscode.Uri): string {
+        return this._content;
+    }
+}
+
+const k8sProvider = new K8sContentProvider();
+
 async function displayOutput(content: string, outputType: string | undefined) {
     if (outputType === 'newTab') {
         const document = await vscode.workspace.openTextDocument({ content: content, language: 'yaml' });
         await vscode.window.showTextDocument(document);
     } else if (outputType === 'tab') {
-        const tmpPath = path.join(os.tmpdir(), 'k8s-helpers');
-        fs.writeFileSync(tmpPath, content);
-        const document = await vscode.workspace.openTextDocument(tmpPath);
+        const uri = vscode.Uri.parse('k8s-helpers:output.yaml');
+        k8sProvider.update(uri, content);
+        const document = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(document, { preview: false });
     }
 }
 
 export function activate(context: vscode.ExtensionContext) {
     const disposables = [
+        vscode.workspace.registerTextDocumentContentProvider('k8s-helpers', k8sProvider),
         vscode.commands.registerCommand('k8s-helpers-ext.apply', (uri: vscode.Uri) => {
             executeKubectlCommand('apply', uri);
         }),
@@ -295,6 +313,11 @@ function executeKubectlCommand(command: string, uri: vscode.Uri | undefined, con
     });
 }
 
+interface KubeContextItem extends vscode.QuickPickItem {
+    config: string;
+    context: string;
+}
+
 function setPermanentContext() {
     const kubeDir = path.join(os.homedir(), '.kube');
     if (!fs.existsSync(kubeDir)) {
@@ -306,14 +329,18 @@ function setPermanentContext() {
     const configs = files.filter(file => file === 'config' || file.endsWith('.config'));
 
     const contextPromises = configs.map(config => {
-        return new Promise<string[]>((resolve, reject) => {
+        return new Promise<KubeContextItem[]>((resolve, reject) => {
             const configPath = path.join(kubeDir, config);
             exec(`kubectl config get-contexts -o name --kubeconfig="${configPath}"`, (error, stdout, stderr) => {
                 if (error) {
                     resolve([]);
                     return;
                 }
-                const contexts = stdout.split('\n').filter(line => line.length > 0).map(context => `${config}-${context}`);
+                const contexts = stdout.split('\n').filter(line => line.length > 0).map(context => ({
+                    label: `${config} - ${context}`,
+                    config: config,
+                    context: context
+                }));
                 resolve(contexts);
             });
         });
@@ -323,9 +350,7 @@ function setPermanentContext() {
         const allContexts = results.flat();
         vscode.window.showQuickPick(allContexts).then(selected => {
             if (selected) {
-                const parts = selected.split('-');
-                const config = parts[0];
-                const context = parts.slice(1).join('-');
+                const { config, context } = selected;
                 const configPath = path.join(kubeDir, config);
 
                 const helperDir = path.join(os.homedir(), '.k8s-helper');
